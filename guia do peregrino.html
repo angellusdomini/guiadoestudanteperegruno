@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guia Interativo de Pesquisa: Locais de Peregrinação</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals (Stone, Amber, Slate) -->
+    <!-- Application Structure Plan: An interactive, single-page wizard/accordion application. The structure guides students step-by-step through the research questions from the source document. Each step is a collapsible section with text areas for input. This was chosen to break down the research task into manageable parts, making it less intimidating and more engaging for students. A final summary page with a copy-to-clipboard feature adds practical utility. -->
+    <!-- Visualization & Content Choices: Report Info: Research questions for students. Goal: Guide research and capture findings. Viz/Presentation: Interactive accordion/stepper with text areas. Interaction: Click to expand steps, type in answers, navigate with buttons, copy final text. Justification: Since the source is a qualitative guide, interactive forms are more appropriate than charts. This method turns a passive guide into an active tool. Library/Method: Vanilla JS for interaction, Tailwind CSS for styling. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .step-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out, padding 0.5s ease-in-out;
+            padding: 0 1.5rem;
+        }
+        .step-content.active {
+            max-height: 1000px; /* Adjust as needed */
+            padding: 1.5rem 1.5rem;
+        }
+        .step-header.active {
+            background-color: #f59e0b; /* amber-500 */
+            color: white;
+        }
+        .step-header.completed {
+            background-color: #16a34a; /* green-600 */
+            color: white;
+        }
+        .step-icon {
+            transition: transform 0.3s ease;
+        }
+        .step-header.active .step-icon {
+            transform: rotate(180deg);
+        }
+    </style>
+</head>
+<body class="bg-stone-100 text-slate-800">
+
+    <div class="container mx-auto max-w-4xl p-4 sm:p-8">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-3xl sm:text-4xl font-bold text-amber-800">Guia Interativo de Pesquisa</h1>
+            <p class="text-slate-600 mt-2 text-lg">Locais de Peregrinação</p>
+        </header>
+
+        <section class="bg-white p-6 rounded-xl shadow-lg mb-8">
+            <h2 class="text-2xl font-semibold text-slate-700 mb-3">Bem-vindo, pesquisador!</h2>
+            <p class="text-slate-600 leading-relaxed">
+                Esta ferramenta foi criada para ajudar você a organizar sua pesquisa sobre um local de peregrinação. Siga os 4 passos abaixo, preenchendo as informações que você descobrir. Clique em cada passo para expandir e ver as perguntas. Ao final, você poderá ver e copiar um resumo completo da sua pesquisa. Boa jornada!
+            </p>
+        </section>
+
+        <main id="research-guide">
+            <!-- Steps will be dynamically inserted here by JavaScript -->
+        </main>
+
+        <section id="summary-section" class="hidden bg-white p-6 rounded-xl shadow-lg mt-8">
+            <h2 class="text-2xl font-semibold text-slate-700 mb-4">Resumo da sua Pesquisa</h2>
+            <div id="summary-content" class="prose max-w-none text-slate-700 bg-stone-50 p-4 rounded-lg"></div>
+            <button id="copy-summary-button" class="mt-6 w-full bg-amber-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-opacity-75 transition-colors duration-300">
+                Copiar Resumo
+            </button>
+            <div id="copy-feedback" class="text-center mt-2 text-green-600 font-medium opacity-0 transition-opacity duration-300">Resumo copiado para a área de transferência!</div>
+        </section>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const guideContainer = document.getElementById('research-guide');
+            const summarySection = document.getElementById('summary-section');
+            const summaryContent = document.getElementById('summary-content');
+            const copySummaryButton = document.getElementById('copy-summary-button');
+            const copyFeedback = document.getElementById('copy-feedback');
+
+            const stepsData = [
+                {
+                    title: 'Passo 1: O Local',
+                    icon: '📍',
+                    questions: [
+                        { id: 'local-1', label: 'Onde fica? (País e cidade)' },
+                        { id: 'local-2', label: 'Qual o nome completo do local?' },
+                        { id: 'local-3', label: 'Como ele é? (É uma igreja, um templo, uma montanha, um rio?)' }
+                    ]
+                },
+                {
+                    title: 'Passo 2: A História',
+                    icon: '📜',
+                    questions: [
+                        { id: 'historia-1', label: 'O que aconteceu lá para o local se tornar famoso?' },
+                        { id: 'historia-2', label: 'Quem é a pessoa mais importante ligada a este local? (Um profeta, um santo, um rei?)' },
+                        { id: 'historia-3', label: 'Quando isso aconteceu? (Em que ano ou época?)' }
+                    ]
+                },
+                {
+                    title: 'Passo 3: A Peregrinação',
+                    icon: '🚶‍♂️',
+                    questions: [
+                        { id: 'peregrinacao-1', label: 'O que as pessoas fazem quando visitam o local?' },
+                        { id: 'peregrinacao-2', label: 'Por que as pessoas vão até lá?' },
+                        { id: 'peregrinacao-3', label: 'Como elas chegam lá?' }
+                    ]
+                },
+                {
+                    title: 'Passo 4: Curiosidades',
+                    icon: '�',
+                    questions: [
+                        { id: 'curiosidades-1', label: 'Qual é o fato mais legal que você descobriu sobre o local?' },
+                        { id: 'curiosidades-2', label: 'Ele aparece em filmes ou desenhos?' },
+                        { id: 'curiosidades-3', label: 'Qual a comida típica ou objeto que as pessoas compram lá?' }
+                    ]
+                }
+            ];
+
+            function renderSteps() {
+                let html = '';
+                stepsData.forEach((step, index) => {
+                    html += `
+                        <div class="mb-4 bg-white rounded-xl shadow-md overflow-hidden">
+                            <button class="step-header w-full text-left p-4 flex justify-between items-center bg-stone-200 hover:bg-stone-300 transition-colors duration-300 focus:outline-none" data-step="${index}">
+                                <div class="flex items-center">
+                                    <span class="text-2xl mr-4">${step.icon}</span>
+                                    <span class="text-xl font-semibold text-slate-700">${step.title}</span>
+                                </div>
+                                <span class="step-icon text-2xl font-bold text-slate-500">▾</span>
+                            </button>
+                            <div class="step-content">
+                                ${step.questions.map(q => `
+                                    <div class="mb-6">
+                                        <label for="${q.id}" class="block text-slate-700 font-semibold mb-2">${q.label}</label>
+                                        <textarea id="${q.id}" rows="4" class="w-full p-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-shadow"></textarea>
+                                    </div>
+                                `).join('')}
+                                <div class="flex justify-between mt-4">
+                                    ${index > 0 ? `<button class="nav-button prev bg-slate-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-slate-600 transition-colors" data-step="${index}">Anterior</button>` : '<div></div>'}
+                                    ${index < stepsData.length - 1 ? `<button class="nav-button next bg-amber-500 text-white font-bold py-2 px-6 rounded-lg hover:bg-amber-600 transition-colors" data-step="${index}">Próximo</button>` : `<button class="nav-button finish bg-green-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-green-700 transition-colors" data-step="${index}">Finalizar Pesquisa</button>`}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                guideContainer.innerHTML = html;
+            }
+
+            function toggleStep(stepIndex) {
+                const allHeaders = document.querySelectorAll('.step-header');
+                const allContents = document.querySelectorAll('.step-content');
+
+                allHeaders.forEach((header, index) => {
+                    const content = allContents[index];
+                    if (index === stepIndex) {
+                        header.classList.add('active');
+                        content.classList.add('active');
+                    } else {
+                        header.classList.remove('active');
+                        content.classList.remove('active');
+                    }
+                });
+            }
+            
+            function markStepAsCompleted(stepIndex) {
+                 const header = document.querySelector(`.step-header[data-step="${stepIndex}"]`);
+                 if(header) {
+                     header.classList.add('completed');
+                     header.classList.remove('active');
+                 }
+            }
+            
+            function isStepCompleted(stepIndex) {
+                const content = document.querySelector(`.step-header[data-step="${stepIndex}"] + .step-content`);
+                const textareas = content.querySelectorAll('textarea');
+                for (const textarea of textareas) {
+                    if (textarea.value.trim() === '') {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            function generateSummary() {
+                let summaryHTML = '';
+                stepsData.forEach(step => {
+                    summaryHTML += `<h3><strong>${step.title}</strong></h3><ul>`;
+                    step.questions.forEach(q => {
+                        const textarea = document.getElementById(q.id);
+                        const answer = textarea.value.trim() || '<em>Não preenchido</em>';
+                        summaryHTML += `<li><strong>${q.label}:</strong> ${answer.replace(/\n/g, '<br>')}</li>`;
+                    });
+                    summaryHTML += '</ul><hr class="my-4">';
+                });
+                summaryContent.innerHTML = summaryHTML.slice(0, -22); // Remove last <hr>
+                summarySection.classList.remove('hidden');
+                summarySection.scrollIntoView({ behavior: 'smooth' });
+            }
+
+            guideContainer.addEventListener('click', function(e) {
+                const target = e.target.closest('button');
+                if (!target) return;
+
+                if (target.classList.contains('step-header')) {
+                    const stepIndex = parseInt(target.dataset.step);
+                    const content = target.nextElementSibling;
+                    if (content.classList.contains('active')) {
+                        content.classList.remove('active');
+                        target.classList.remove('active');
+                    } else {
+                        toggleStep(stepIndex);
+                    }
+                }
+
+                if (target.classList.contains('nav-button')) {
+                    const currentStepIndex = parseInt(target.dataset.step);
+                    
+                    if (isStepCompleted(currentStepIndex)) {
+                        markStepAsCompleted(currentStepIndex);
+                    }
+
+                    if (target.classList.contains('next')) {
+                        toggleStep(currentStepIndex + 1);
+                        document.querySelector(`.step-header[data-step="${currentStepIndex + 1}"]`).scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    } else if (target.classList.contains('prev')) {
+                        toggleStep(currentStepIndex - 1);
+                         document.querySelector(`.step-header[data-step="${currentStepIndex - 1}"]`).scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    } else if (target.classList.contains('finish')) {
+                        generateSummary();
+                    }
+                }
+            });
+
+            copySummaryButton.addEventListener('click', function() {
+                let plainTextSummary = '';
+                stepsData.forEach(step => {
+                    plainTextSummary += `${step.title.toUpperCase()}\n`;
+                    plainTextSummary += '-'.repeat(step.title.length) + '\n';
+                    step.questions.forEach(q => {
+                        const textarea = document.getElementById(q.id);
+                        const answer = textarea.value.trim() || 'Não preenchido';
+                        plainTextSummary += `${q.label}:\n${answer}\n\n`;
+                    });
+                });
+
+                const tempTextarea = document.createElement('textarea');
+                tempTextarea.value = plainTextSummary;
+                document.body.appendChild(tempTextarea);
+                tempTextarea.select();
+                try {
+                    document.execCommand('copy');
+                    copyFeedback.classList.add('opacity-100');
+                    setTimeout(() => {
+                        copyFeedback.classList.remove('opacity-100');
+                    }, 2000);
+                } catch (err) {
+                    console.error('Falha ao copiar texto: ', err);
+                }
+                document.body.removeChild(tempTextarea);
+            });
+
+            renderSteps();
+            toggleStep(0);
+        });
+    </script>
+
+</body>
+</html>
+�
